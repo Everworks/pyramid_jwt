@@ -230,7 +230,7 @@ The follow options applies to the cookie-based authentication policy:
 +----------------+---------------------------+---------------+--------------------------------------------+
 | cookie_path    | jwt.cookie_path           | None          | Path for cookie.                           |
 +----------------+---------------------------+---------------+--------------------------------------------+
-| cookie_seerializer   | jwt.cookie_seerializer           | None          | Cookie Serializer, default logic is to base64 encode cookie value.                           |
+| cookie_serializer| jwt.cookie_serializer   | None          | Cookie Serializer, default logic is to base64 encode cookie value. |
 +----------------+---------------------------+---------------+--------------------------------------------+
 | https_only     | jwt.https_only_cookie     | True          | Whether or not the token should only be    |
 |                |                           |               | sent through a secure HTTPS transport      |

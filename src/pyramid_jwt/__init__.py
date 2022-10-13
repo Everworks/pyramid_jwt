@@ -15,6 +15,11 @@ def includeme(config):
         set_jwt_cookie_authentication_policy,
         action_wrap=True,
     )
+    config.add_directive(
+        "get_jwt_cookie_authentication_policy",
+        get_jwt_cookie_authentication_policy,
+        action_wrap=True,
+    )
 
 
 def create_jwt_authentication_policy(
@@ -129,6 +134,67 @@ def set_jwt_cookie_authentication_policy(
     )
 
     _configure(config, auth_policy)
+
+
+def get_jwt_cookie_authentication_policy(
+    config,
+    private_key=None,
+    public_key=None,
+    algorithm=None,
+    expiration=None,
+    leeway=None,
+    http_header=None,
+    auth_type=None,
+    callback=None,
+    json_encoder=None,
+    audience=None,
+    cookie_name=None,
+    https_only=True,
+    reissue_time=None,
+    cookie_path=None,
+    cookie_serializer=None,
+):
+    """Create an auth policy but do not apply it and return it.
+    This is for us to setup multiple auth policies
+    """
+    settings = config.get_settings()
+    cookie_name = cookie_name or settings.get("jwt.cookie_name")
+    cookie_path = cookie_path or settings.get("jwt.cookie_path")
+    reissue_time = reissue_time or settings.get("jwt.cookie_reissue_time")
+    if https_only is None:
+        https_only = settings.get("jwt.https_only_cookie", True)
+
+    auth_policy = create_jwt_authentication_policy(
+        config,
+        private_key,
+        public_key,
+        algorithm,
+        expiration,
+        leeway,
+        http_header,
+        auth_type,
+        callback,
+        json_encoder,
+        audience,
+    )
+
+    auth_policy = JWTCookieAuthenticationPolicy.make_from(
+        auth_policy,
+        cookie_name=cookie_name,
+        https_only=https_only,
+        reissue_time=reissue_time,
+        cookie_path=cookie_path,
+        cookie_serializer=cookie_serializer,
+    )
+
+    config.add_request_method(
+        lambda request: auth_policy, "authentication_policy", reify=True
+    )
+    config.add_request_method(_request_claims, "jwt_claims", reify=True)
+    config.add_request_method(_request_create_token, "create_jwt_token")
+
+
+    return auth_policy
 
 
 def set_jwt_authentication_policy(
