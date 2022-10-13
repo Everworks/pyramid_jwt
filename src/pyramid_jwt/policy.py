@@ -172,6 +172,7 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
         https_only=True,
         reissue_time=None,
         cookie_path=None,
+        cookie_serializer=None
     ):
         super(JWTCookieAuthenticationPolicy, self).__init__(
             private_key,
@@ -201,6 +202,7 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
             max_age=self.max_age,
             httponly=True,
             path=cookie_path,
+            serializer=cookie_serializer,
         )
 
     @staticmethod
