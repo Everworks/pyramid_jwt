@@ -1,6 +1,7 @@
 from .policy import (
     JWTAuthenticationPolicy,
     JWTCookieAuthenticationPolicy,
+    JWTKMSCookieAuthenticationPolicy,
     json_encoder_factory,
 )
 
@@ -153,6 +154,7 @@ def get_jwt_cookie_authentication_policy(
     reissue_time=None,
     cookie_path=None,
     cookie_serializer=None,
+    jwt_kms_arn=None,
 ):
     """Create an auth policy but do not apply it and return it.
     This is for us to setup multiple auth policies
@@ -178,14 +180,25 @@ def get_jwt_cookie_authentication_policy(
         audience,
     )
 
-    auth_policy = JWTCookieAuthenticationPolicy.make_from(
-        auth_policy,
-        cookie_name=cookie_name,
-        https_only=https_only,
-        reissue_time=reissue_time,
-        cookie_path=cookie_path,
-        cookie_serializer=cookie_serializer,
-    )
+    if jwt_kms_arn:
+        auth_policy = JWTKMSCookieAuthenticationPolicy.make_from(
+            auth_policy,
+            cookie_name=cookie_name,
+            https_only=https_only,
+            reissue_time=reissue_time,
+            cookie_path=cookie_path,
+            cookie_serializer=cookie_serializer,
+            jwt_kms_arn=jwt_kms_arn
+        )
+    else :
+        auth_policy = JWTCookieAuthenticationPolicy.make_from(
+            auth_policy,
+            cookie_name=cookie_name,
+            https_only=https_only,
+            reissue_time=reissue_time,
+            cookie_path=cookie_path,
+            cookie_serializer=cookie_serializer,
+        )
 
     config.add_request_method(
         lambda request: auth_policy, "authentication_policy", reify=True

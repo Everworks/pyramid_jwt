@@ -1,8 +1,12 @@
 import datetime
+import base64
 import logging
+import json
+import boto3
 import time
 import warnings
 from json import JSONEncoder
+import os
 
 import jwt
 from pyramid.renderers import JSON
@@ -296,3 +300,49 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
 
         request.add_response_callback(reissue_jwt_cookie)
         request._jwt_cookie_reissued = True
+
+
+@implementer(IAuthenticationPolicy)
+class JWTKMSCookieAuthenticationPolicy(JWTCookieAuthenticationPolicy):
+    def __init__(self, *args, jwt_kms_arn=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not jwt_kms_arn:
+            raise RuntimeError("Missing jwt_kms_arn")
+        self.aws_key_arn = jwt_kms_arn
+
+    def _jwt_kms_assemtric_encryption(self, jwt_head, jwt_payload):
+        token_components = {
+            "header":  base64.urlsafe_b64encode(json.dumps(jwt_head).encode()).decode().rstrip("="),
+            "payload": base64.urlsafe_b64encode(json.dumps(jwt_payload).encode()).decode().rstrip("="),
+        }
+        message = f'{token_components.get("header")}.{token_components.get("payload")}'
+        client = boto3.client('kms')
+        response = client.sign(
+            KeyId=self.aws_key_arn,
+            Message=message.encode(),
+            MessageType="RAW",
+            SigningAlgorithm="RSASSA_PKCS1_V1_5_SHA_256"
+        )
+        token_components["signature"] = base64.urlsafe_b64encode(response["Signature"]).decode().rstrip("=")
+        return f'{token_components.get("header")}.{token_components.get("payload")}.{token_components["signature"]}'
+
+    def create_token(self, principal, expiration=None, audience=None, **claims):
+        header = {
+            "alg": "RS256",
+            "typ": "JWT"
+        }
+        payload = self.default_claims.copy()
+        payload.update(claims)
+        payload["sub"] = principal
+        payload["iat"] = iat = datetime.datetime.utcnow()
+        expiration = expiration or self.expiration
+        audience = audience or self.audience
+        if expiration:
+            if not isinstance(expiration, datetime.timedelta):
+                expiration = datetime.timedelta(seconds=expiration)
+            payload["exp"] = iat + expiration
+        if audience:
+            payload["aud"] = audience
+
+        token = self._jwt_kms_assemtric_encryption(header, payload)
+        return token
