@@ -309,11 +309,32 @@ class JWTKMSCookieAuthenticationPolicy(JWTCookieAuthenticationPolicy):
         if not jwt_kms_arn:
             raise RuntimeError("Missing jwt_kms_arn")
         self.aws_key_arn = jwt_kms_arn
+    
+    @staticmethod
+    def make_from(policy, **kwargs):
+        if not isinstance(policy, JWTAuthenticationPolicy):
+            pol_type = policy.__class__.__name__
+            raise ValueError("Invalid policy type %s" % pol_type)
+
+        return JWTKMSCookieAuthenticationPolicy(
+            private_key=policy.private_key,
+            public_key=policy.public_key,
+            algorithm=policy.algorithm,
+            leeway=policy.leeway,
+            expiration=policy.expiration,
+            default_claims=policy.default_claims,
+            http_header=policy.http_header,
+            auth_type=policy.auth_type,
+            callback=policy.callback,
+            json_encoder=policy.json_encoder,
+            audience=policy.audience,
+            **kwargs
+        )
 
     def _jwt_kms_assemtric_encryption(self, jwt_head, jwt_payload):
         token_components = {
-            "header":  base64.urlsafe_b64encode(json.dumps(jwt_head).encode()).decode().rstrip("="),
-            "payload": base64.urlsafe_b64encode(json.dumps(jwt_payload).encode()).decode().rstrip("="),
+            "header":  base64.urlsafe_b64encode(json.dumps(jwt_head, cls=self.json_encoder).encode()).decode().rstrip("="),
+            "payload": base64.urlsafe_b64encode(json.dumps(jwt_payload, cls=self.json_encoder).encode()).decode().rstrip("="),
         }
         message = f'{token_components.get("header")}.{token_components.get("payload")}'
         client = boto3.client('kms')
