@@ -242,19 +242,17 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
         headers = profile.get_headers(value, **kw)
         return headers
 
-    def remember(self, request, principal, **kw):
+    def remember(self, request, principal, domains=None, **kw):
         token = self.create_token(principal, self.expiration, self.audience, **kw)
 
         if hasattr(request, "_jwt_cookie_reissued"):
             request._jwt_cookie_reissue_revoked = True
 
-        domains = kw.get("domains")
-
         return self._get_cookies(request, token, self.max_age, domains=domains)
 
-    def forget(self, request):
+    def forget(self, request, domains=None):
         request._jwt_cookie_reissue_revoked = True
-        return self._get_cookies(request, None)
+        return self._get_cookies(request, None, domains=domains)
 
     def get_claims(self, request):
         profile = self.cookie_profile.bind(request)
