@@ -103,6 +103,7 @@ def set_jwt_cookie_authentication_policy(
     reissue_time=None,
     cookie_path=None,
     cookie_serializer=None,
+    domains=None
 ):
     settings = config.get_settings()
     cookie_name = cookie_name or settings.get("jwt.cookie_name")
@@ -132,6 +133,7 @@ def set_jwt_cookie_authentication_policy(
         reissue_time=reissue_time,
         cookie_path=cookie_path,
         cookie_serializer=cookie_serializer,
+        domains=domains
     )
 
     _configure(config, auth_policy)
@@ -155,6 +157,7 @@ def get_jwt_cookie_authentication_policy(
     cookie_path=None,
     cookie_serializer=None,
     jwt_kms_arn=None,
+    domains=None
 ):
     """Create an auth policy but do not apply it and return it.
     This is for us to setup multiple auth policies
@@ -188,7 +191,8 @@ def get_jwt_cookie_authentication_policy(
             reissue_time=reissue_time,
             cookie_path=cookie_path,
             cookie_serializer=cookie_serializer,
-            jwt_kms_arn=jwt_kms_arn
+            jwt_kms_arn=jwt_kms_arn,
+            domains=domains
         )
     else :
         auth_policy = JWTCookieAuthenticationPolicy.make_from(
@@ -198,6 +202,7 @@ def get_jwt_cookie_authentication_policy(
             reissue_time=reissue_time,
             cookie_path=cookie_path,
             cookie_serializer=cookie_serializer,
+            domains=domains
         )
 
     config.add_request_method(

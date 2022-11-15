@@ -176,7 +176,8 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
         https_only=True,
         reissue_time=None,
         cookie_path=None,
-        cookie_serializer=None
+        cookie_serializer=None,
+        domains=None
     ):
         super(JWTCookieAuthenticationPolicy, self).__init__(
             private_key,
@@ -199,6 +200,7 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
         if reissue_time and isinstance(reissue_time, datetime.timedelta):
             reissue_time = reissue_time.total_seconds()
         self.reissue_time = reissue_time
+        self.default_domains = domains
 
         self.cookie_profile = CookieProfile(
             cookie_name=self.cookie_name,
@@ -232,8 +234,9 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
 
     def _get_cookies(self, request, value, max_age=None, domains=None):
         profile = self.cookie_profile(request)
+        domains = self.default_domains or []
         if domains is None:
-            domains = [request.domain]
+            domains += [request.domain]
 
         kw = {"domains": domains}
         if max_age is not None:
