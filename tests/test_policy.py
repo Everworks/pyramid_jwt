@@ -250,17 +250,13 @@ def test_cookie_policy_custom_domain_list():
 def test_cookie_policy_default_domain():
     policy = JWTCookieAuthenticationPolicy("secret", domains=["python.com"])
     request = Request.blank("/")
-    domains = [request.domain, "other"]
+    domains = []
     headers = policy.remember(request, "user", domains=domains)
 
-    assert len(headers) == 3
+    assert len(headers) == 1
     _, cookie1 = headers[0]
-    _, cookie2 = headers[1]
-    _, cookie3 = headers[2]
 
-    assert f"Domain={request.domain}" in cookie1
-    assert f"Domain=other" in cookie2
-    assert f"Domain=python.com" in cookie3
+    assert f"Domain=python.com" in cookie1
 
 
 def test_insecure_cookie_policy():

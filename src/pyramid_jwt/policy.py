@@ -234,9 +234,11 @@ class JWTCookieAuthenticationPolicy(JWTAuthenticationPolicy):
 
     def _get_cookies(self, request, value, max_age=None, domains=None):
         profile = self.cookie_profile(request)
-        domains = domains or [request.domain]
-        if self.default_domains:
-            domains += self.default_domains
+        if not domains:
+            if self.default_domains:
+                domains = self.default_domains
+            else:
+                domains = [request.domain]
 
         kw = {"domains": domains}
         if max_age is not None:
