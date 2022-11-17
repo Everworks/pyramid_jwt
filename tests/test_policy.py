@@ -234,9 +234,10 @@ def test_cookie_policy_forget():
 
 
 def test_cookie_policy_custom_domain_list():
-    policy = JWTCookieAuthenticationPolicy("secret")
+    policy = JWTCookieAuthenticationPolicy("secret", domains=["this should be overwritten.com"])
     request = Request.blank("/")
     domains = [request.domain, "other"]
+    # domains will override default domains or request domains 
     headers = policy.remember(request, "user", domains=domains)
 
     assert len(headers) == 2
